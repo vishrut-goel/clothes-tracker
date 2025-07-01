@@ -3,27 +3,32 @@ import React, { useState } from "react";
 
 export default function ClothesList({ entries, onToggle, onDelete, onUpdate }) {
   const [editingId, setEditingId] = useState(null);
-  const [editData, setEditData] = useState({ item: "", qty: 1 });
+  const [editData, setEditData] = useState({ item: "", qty: 1, price: 7 });
 
   if (!entries.length) return <p className="text-gray-500">No entries yet.</p>;
 
   const handleEditStart = (entry) => {
     setEditingId(entry.id);
-    setEditData({ item: entry.item, qty: entry.qty });
+    setEditData({ 
+      item: entry.item, 
+      qty: entry.qty, 
+      price: entry.price || 7 // Fallback for old entries without price
+    });
   };
 
   const handleEditSave = (id) => {
     onUpdate(id, {
       item: editData.item || "Clothes",
-      qty: parseInt(editData.qty)
+      qty: parseInt(editData.qty),
+      price: parseFloat(editData.price)
     });
     setEditingId(null);
-    setEditData({ item: "", qty: 1 });
+    setEditData({ item: "", qty: 1, price: 7 });
   };
 
   const handleEditCancel = () => {
     setEditingId(null);
-    setEditData({ item: "", qty: 1 });
+    setEditData({ item: "", qty: 1, price: 7 });
   };
 
   const handleDelete = (id) => {
@@ -35,25 +40,39 @@ export default function ClothesList({ entries, onToggle, onDelete, onUpdate }) {
   return (
     <ul className="text-left space-y-2">
       {entries.map((e) => (
-        <li key={e.id} className="border rounded p-2 bg-gray-50">
+        <li key={e.id} className="border rounded p-3 bg-gray-50">
           {editingId === e.id ? (
             // Edit mode
             <div className="space-y-2">
+              <input
+                type="text"
+                value={editData.item}
+                onChange={(evt) => setEditData({ ...editData, item: evt.target.value })}
+                placeholder="Item name"
+                className="w-full border rounded px-2 py-1 text-sm"
+              />
               <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={editData.item}
-                  onChange={(evt) => setEditData({ ...editData, item: evt.target.value })}
-                  placeholder="Item name"
-                  className="flex-1 border rounded px-2 py-1 text-sm"
-                />
-                <input
-                  type="number"
-                  min="1"
-                  value={editData.qty}
-                  onChange={(evt) => setEditData({ ...editData, qty: evt.target.value })}
-                  className="w-20 border rounded px-2 py-1 text-sm"
-                />
+                <div className="flex-1">
+                  <label className="block text-xs text-gray-600 mb-1">Quantity</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={editData.qty}
+                    onChange={(evt) => setEditData({ ...editData, qty: evt.target.value })}
+                    className="w-full border rounded px-2 py-1 text-sm"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs text-gray-600 mb-1">Price (₹)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    value={editData.price}
+                    onChange={(evt) => setEditData({ ...editData, price: evt.target.value })}
+                    className="w-full border rounded px-2 py-1 text-sm"
+                  />
+                </div>
               </div>
               <div className="flex gap-2 justify-end">
                 <button
@@ -79,9 +98,14 @@ export default function ClothesList({ entries, onToggle, onDelete, onUpdate }) {
                   checked={e.returned}
                   onChange={() => onToggle(e.id)}
                 />
-                <span className={e.returned ? "line-through text-gray-500" : ""}>
-                  {e.date} | {e.item} × {e.qty}
-                </span>
+                <div className={e.returned ? "line-through text-gray-500" : ""}>
+                  <div className="font-medium">
+                    {e.date} | {e.item} × {e.qty}
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    ₹{(e.price || 7).toFixed(1)} each = ₹{((e.price || 7) * e.qty).toFixed(1)} total
+                  </div>
+                </div>
               </div>
               <div className="flex gap-1">
                 <button
